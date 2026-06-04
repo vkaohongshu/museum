@@ -17,21 +17,35 @@ export function PublicArticleDetailPage() {
   }
 
   const relatedGalleryIds = galleryEvents.filter((event) => event.linkedArticleIds.includes(article.id)).map((event) => event.id);
+  const pills = (
+    <div className="pill-row">
+      <TagPill item={categoryById(categories, article.categoryId)} />
+      {tagsByIds(tags, article.tagIds).map((tag) => <TagPill key={tag.id} item={tag} subtle />)}
+    </div>
+  );
 
   return (
     <article className="article-detail">
       <Link className="back-link" to="/articles"><ArrowLeft size={17} />返回文章</Link>
-      <img className="detail-cover" src={article.cover} alt={article.title} />
+      {article.cover ? <img className="detail-cover" src={article.cover} alt={article.title} /> : (
+        <header className="detail-cover detail-text-cover">
+          {pills}
+          <h1>{article.title}</h1>
+          <div className="detail-meta">
+            <span>{formatDate(article.createdAt)}</span>
+            <span><Clock size={16} />{article.readMinutes} 分钟阅读</span>
+          </div>
+        </header>
+      )}
       <div className="detail-card">
-        <div className="pill-row">
-          <TagPill item={categoryById(categories, article.categoryId)} />
-          {tagsByIds(tags, article.tagIds).map((tag) => <TagPill key={tag.id} item={tag} subtle />)}
-        </div>
-        <h1>{article.title}</h1>
-        <div className="detail-meta">
-          <span>{formatDate(article.createdAt)}</span>
-          <span><Clock size={16} />{article.readMinutes} 分钟阅读</span>
-        </div>
+        {article.cover ? pills : null}
+        {article.cover ? <h1>{article.title}</h1> : null}
+        {article.cover ? (
+          <div className="detail-meta">
+            <span>{formatDate(article.createdAt)}</span>
+            <span><Clock size={16} />{article.readMinutes} 分钟阅读</span>
+          </div>
+        ) : null}
         <p className="lead">{articleIntro(article.body)}</p>
         <MarkdownView content={article.body} />
       </div>

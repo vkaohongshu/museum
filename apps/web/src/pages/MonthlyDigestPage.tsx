@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Image, MessageCircle, Smile, FileText } from "lucide-react";
+import { FileText, Image, MessageCircle, Smile } from "lucide-react";
+import { MemoryJar } from "../components/memory/MemoryJar";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
 import { useLife } from "../context/LifeContext";
 import { formatDate, sameMonth } from "../utils/format";
-import { imageCount, keywordsFromTags, moodSummary } from "../utils/insights";
+import { imageCount, memoryItemsFromTagIds, moodSummary } from "../utils/insights";
 
 export function MonthlyDigestPage() {
   const { articles, thoughts, galleryEvents, moodEntries, tags } = useLife();
@@ -14,10 +15,11 @@ export function MonthlyDigestPage() {
   const monthThoughts = thoughts.filter((item) => sameMonth(item.createdAt, month));
   const monthGalleries = galleryEvents.filter((item) => sameMonth(item.date, month));
   const monthMoods = moodEntries.filter((item) => sameMonth(item.date, month));
+  const monthTagIds = [...monthArticles.flatMap((item) => item.tagIds), ...monthThoughts.flatMap((item) => item.tagIds), ...monthGalleries.flatMap((item) => item.tagIds)];
   const photos = monthGalleries.flatMap((item) => item.images).slice(0, 8);
-  const keywords = useMemo(
-    () => keywordsFromTags(tags, [...monthArticles.flatMap((item) => item.tagIds), ...monthThoughts.flatMap((item) => item.tagIds), ...monthGalleries.flatMap((item) => item.tagIds)], ["月度", "生活", "小报"]),
-    [tags, monthArticles, monthThoughts, monthGalleries]
+  const memoryItems = useMemo(
+    () => memoryItemsFromTagIds(tags, monthTagIds, ["生活", "照片", "阅读", "旅行", "摄影", "思考", "美食", "音乐"], 15),
+    [tags, monthTagIds]
   );
   const moodCounts = moodSummary(monthMoods);
   const records = [
@@ -29,16 +31,16 @@ export function MonthlyDigestPage() {
   return (
     <div className="page-stack">
       <PageHeader
+        action={<input className="compact-input" type="month" value={month} onChange={(event) => setMonth(event.target.value)} />}
+        description="像一页轻量生活杂志，自动整理本月文字、照片、记忆关键词和心情。"
         eyebrow="Monthly Digest"
         title="月度小报"
-        description="像一页轻量生活杂志，自动整理本月文字、照片、关键词和心情。"
-        action={<input className="compact-input" type="month" value={month} onChange={(event) => setMonth(event.target.value)} />}
       />
 
       <section className="digest-cover panel">
         <span>{month} Life Magazine</span>
         <h2>本月生活小报已生成</h2>
-        <p>这一页先基于 mock/localStorage 数据生成静态结果，未来可以接 AI 总结。</p>
+        <p>这一页先基于 mock/localStorage 数据生成静态结构，未来可以接 AI 总结。</p>
         <button className="primary-button" type="button">生成小报</button>
       </section>
 
@@ -49,14 +51,19 @@ export function MonthlyDigestPage() {
         <StatCard label="心情记录" value={monthMoods.length} tone="rose" icon={Smile} />
       </section>
 
-      <section className="two-column">
+      <section className="two-column digest-memory-section">
         <div className="panel">
           <div className="section-title"><h2>本月照片墙</h2></div>
           <div className="digest-photo-wall">{photos.map((photo) => <img src={photo} alt="本月照片" key={photo} />)}</div>
         </div>
-        <div className="panel">
-          <div className="section-title"><h2>关键词与心情</h2></div>
-          <div className="keyword-cloud">{keywords.map((keyword) => <span key={keyword}>{keyword}</span>)}</div>
+        <div className="panel memory-keyword-panel">
+          <MemoryJar
+            emptyText="本月还没有可以装进瓶子的关键词"
+            items={memoryItems}
+            size="compact"
+            subtitle="关键词数量控制在 8-15 个，出现越多的主题越靠近瓶底。"
+            title="本月记忆关键词"
+          />
           <div className="mood-bars">
             {Object.entries(moodCounts).map(([mood, count]) => (
               <div key={mood}><span>{mood}</span><strong style={{ width: `${Number(count) * 36}px` }} /> <small>{Number(count)} 天</small></div>

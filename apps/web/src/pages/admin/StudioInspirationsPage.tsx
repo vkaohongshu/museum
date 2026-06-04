@@ -1,5 +1,5 @@
 import { CSSProperties, FormEvent, useMemo, useState } from "react";
-import { Eye, MapPin, PenLine, Plane, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
+import { Eye, MapPin, PenLine, Plane, ShoppingBag, Sparkles, Trash2, X } from "lucide-react";
 import { useLife } from "../../context/LifeContext";
 import { InspirationStatus, InspirationType } from "../../types";
 import { formatShortDate } from "../../utils/format";
@@ -42,6 +42,11 @@ export function StudioInspirationsPage() {
     setInspirations((current) => [next, ...current]);
     setTitle("");
     setActiveId(next.id);
+  }
+
+  function updateActive(patch: Partial<typeof active>) {
+    if (!active) return;
+    setInspirations((current) => current.map((item) => item.id === active.id ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item));
   }
 
   return (
@@ -87,11 +92,21 @@ export function StudioInspirationsPage() {
       </section>
 
       {active ? (
-        <aside className="idea-detail-drawer">
-          <button type="button" onClick={() => setActiveId(null)}>关闭</button>
-          <input value={active.title} onChange={(event) => setInspirations((current) => current.map((item) => item.id === active.id ? { ...item, title: event.target.value, updatedAt: new Date().toISOString() } : item))} />
-          <textarea rows={8} value={active.content} onChange={(event) => setInspirations((current) => current.map((item) => item.id === active.id ? { ...item, content: event.target.value, updatedAt: new Date().toISOString() } : item))} />
-        </aside>
+        <div className="drawer-backdrop inspiration-drawer-backdrop" onClick={() => setActiveId(null)}>
+          <aside className="edit-drawer inspiration-edit-drawer" onClick={(event) => event.stopPropagation()}>
+            <button aria-label="关闭" className="memory-drawer-close" type="button" onClick={() => setActiveId(null)}><X size={18} /></button>
+            <span className="eyebrow">Inspiration</span>
+            <label>
+              标题
+              <input value={active.title} onChange={(event) => updateActive({ title: event.target.value })} />
+            </label>
+            <label>
+              内容
+              <textarea rows={8} value={active.content} onChange={(event) => updateActive({ content: event.target.value })} />
+            </label>
+            <button className="primary-button" type="button" onClick={() => setActiveId(null)}>保存</button>
+          </aside>
+        </div>
       ) : null}
     </div>
   );

@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { X } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { useLife } from "../context/LifeContext";
 import { Note } from "../types";
@@ -11,6 +12,8 @@ export function NotesPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [color, setColor] = useState<Note["color"]>("sun");
+  const [editingId, setEditingId] = useState("");
+  const editingNote = notes.find((note) => note.id === editingId);
 
   function addNote(event: FormEvent) {
     event.preventDefault();
@@ -28,6 +31,17 @@ export function NotesPage() {
     setTitle("");
     setContent("");
     setColor("sun");
+  }
+
+  function updateEditingNote(patch: Partial<Note>) {
+    if (!editingNote) return;
+    setNotes((current) => current.map((note) => note.id === editingNote.id ? { ...note, ...patch, updatedAt: new Date().toISOString() } : note));
+  }
+
+  function deleteEditingNote() {
+    if (!editingNote) return;
+    setNotes((current) => current.filter((note) => note.id !== editingNote.id));
+    setEditingId("");
   }
 
   return (
@@ -59,16 +73,48 @@ export function NotesPage() {
 
       <section className="note-grid">
         {notes.map((note) => (
-          <article className={`note-card note-${note.color}`} key={note.id}>
+          <button className={`note-card note-${note.color}`} key={note.id} onClick={() => setEditingId(note.id)} type="button">
             <span>{formatShortDate(note.createdAt)}</span>
             <h2>{note.title}</h2>
             <p>{note.content}</p>
-            <button type="button" onClick={() => setNotes((current) => current.filter((item) => item.id !== note.id))}>
-              删除
-            </button>
-          </article>
+          </button>
         ))}
       </section>
+
+      {editingNote ? (
+        <div className="drawer-backdrop note-drawer-backdrop" onClick={() => setEditingId("")}>
+          <aside className="edit-drawer note-edit-drawer" onClick={(event) => event.stopPropagation()}>
+            <button aria-label="关闭" className="memory-drawer-close" onClick={() => setEditingId("")} type="button"><X size={18} /></button>
+            <span className="eyebrow">Note</span>
+            <label>
+              标题
+              <input value={editingNote.title} onChange={(event) => updateEditingNote({ title: event.target.value })} />
+            </label>
+            <label>
+              内容
+              <textarea rows={8} value={editingNote.content} onChange={(event) => updateEditingNote({ content: event.target.value })} />
+            </label>
+            <label>
+              颜色
+              <div className="color-picker drawer-color-picker">
+                {colorOptions.map((option) => (
+                  <button
+                    aria-label={`选择 ${option}`}
+                    className={editingNote.color === option ? `note-dot note-${option} active` : `note-dot note-${option}`}
+                    key={option}
+                    onClick={() => updateEditingNote({ color: option })}
+                    type="button"
+                  />
+                ))}
+              </div>
+            </label>
+            <div className="button-row">
+              <button className="primary-button" onClick={() => setEditingId("")} type="button">保存</button>
+              <button className="secondary-button" onClick={deleteEditingNote} type="button">删除</button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }

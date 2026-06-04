@@ -33,7 +33,12 @@ export function StudioArticlesPage() {
       <section className="article-preview panel">
         {active ? (
           <>
-            <img src={active.cover} alt={active.title} />
+            {active.cover ? <img src={active.cover} alt={active.title} /> : (
+              <div className="article-text-cover article-preview-text-cover">
+                <span>{formatShortDate(active.createdAt)}</span>
+                <strong>{active.title}</strong>
+              </div>
+            )}
             <div className="pill-row">
               <TagPill item={categoryById(categories, active.categoryId)} />
               {tagsByIds(tags, active.tagIds).map((tag) => <TagPill key={tag.id} item={tag} subtle />)}

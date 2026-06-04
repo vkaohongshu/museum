@@ -39,8 +39,12 @@ export function PublicHomePage() {
           </div>
           <div className="article-list compact">
             {publicArticles.length ? publicArticles.slice(0, 3).map((article) => (
-              <Link className="article-row" key={article.id} to={`/articles/${article.id}`}>
-                <img src={article.cover} alt={article.title} />
+              <Link className={article.cover ? "article-row" : "article-row article-row-text"} key={article.id} to={`/articles/${article.id}`}>
+                {article.cover ? <img src={article.cover} alt={article.title} /> : (
+                  <div className="article-row-text-cover">
+                    <strong>{article.title.slice(0, 1)}</strong>
+                  </div>
+                )}
                 <div>
                   <span>{formatShortDate(article.createdAt)} · {article.readMinutes} 分钟</span>
                   <h3>{article.title}</h3>
@@ -70,12 +74,12 @@ export function PublicHomePage() {
         </div>
 
         {recentGallery ? (
-          <Link className="image-feature panel" to={`/gallery/${recentGallery.id}`}>
-            <img src={recentGallery.cover} alt={recentGallery.name} />
+          <Link className={recentGallery.cover ? "image-feature panel" : "image-feature panel image-feature-text"} to={`/gallery/${recentGallery.id}`}>
+            {recentGallery.cover ? <img src={recentGallery.cover} alt={recentGallery.name} /> : null}
             <div>
               <span>图片事件</span>
               <h2>{recentGallery.name}</h2>
-              <p>{recentGallery.description}</p>
+              {recentGallery.description ? <p>{recentGallery.description}</p> : null}
             </div>
           </Link>
         ) : <div className="empty-state"><strong>No albums</strong></div>}

@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { hydrateQueryCache, persistQueryCache, queryClient } from "./api/queryClient";
 import "./styles/global.css";
+import "./styles/polish.css";
 
 async function bootstrap() {
   await hydrateQueryCache();

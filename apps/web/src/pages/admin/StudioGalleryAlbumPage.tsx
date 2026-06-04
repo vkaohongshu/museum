@@ -1,5 +1,5 @@
 import { ChangeEvent, DragEvent, useMemo, useState } from "react";
-import { ArrowLeft, Eye, Star, Trash2, UploadCloud, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Eye, Star, Trash2, UploadCloud, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useLife } from "../../context/LifeContext";
 import { GalleryImage } from "../../types";
@@ -28,7 +28,7 @@ export function StudioGalleryAlbumPage() {
   const { galleryEvents, setGalleryEvents, categories, tags } = useLife();
   const album = galleryEvents.find((item) => item.id === id) ?? galleryEvents[0];
   const [dragging, setDragging] = useState(false);
-  const [preview, setPreview] = useState<GalleryImage | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const photos = useMemo<GalleryImage[]>(() => {
     if (!album) return [];
@@ -45,6 +45,8 @@ export function StudioGalleryAlbumPage() {
   }, [album]);
 
   if (!album) return <div className="empty-state"><strong>没有找到相册</strong><p>请先创建一个相册。</p></div>;
+
+  const preview = previewIndex === null ? null : photos[previewIndex];
 
   function updateAlbum(patch: Partial<typeof album>) {
     setGalleryEvents((current) => current.map((item) => item.id === album.id ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item));
@@ -92,6 +94,12 @@ export function StudioGalleryAlbumPage() {
       images: nextPhotos.map((photo) => photo.imageUrl),
       cover: album.cover === target?.imageUrl ? nextPhotos[0]?.imageUrl || "" : album.cover
     });
+    if (previewIndex !== null) setPreviewIndex(null);
+  }
+
+  function shiftPreview(offset: number) {
+    if (previewIndex === null || photos.length === 0) return;
+    setPreviewIndex((previewIndex + offset + photos.length) % photos.length);
   }
 
   return (
@@ -109,7 +117,7 @@ export function StudioGalleryAlbumPage() {
           <textarea rows={4} value={album.description} onChange={(event) => updateAlbum({ description: event.target.value })} />
           <div className="field-row">
             <select value={album.categoryId} onChange={(event) => updateAlbum({ categoryId: event.target.value })}>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>
-            <div className="checkbox-cloud">{tags.map((tag) => <span key={tag.id}><input id={`album-detail-tag-${tag.id}`} type="checkbox" checked={album.tagIds.includes(tag.id)} onChange={(event) => updateAlbum({ tagIds: event.target.checked ? [...album.tagIds, tag.id] : album.tagIds.filter((id) => id !== tag.id) })} /><label htmlFor={`album-detail-tag-${tag.id}`}>{tag.name}</label></span>)}</div>
+            <div className="checkbox-cloud">{tags.map((tag) => <span key={tag.id}><input id={`album-detail-tag-${tag.id}`} type="checkbox" checked={album.tagIds.includes(tag.id)} onChange={(event) => updateAlbum({ tagIds: event.target.checked ? [...album.tagIds, tag.id] : album.tagIds.filter((tagId) => tagId !== tag.id) })} /><label htmlFor={`album-detail-tag-${tag.id}`}>{tag.name}</label></span>)}</div>
           </div>
         </div>
       </section>
@@ -117,31 +125,41 @@ export function StudioGalleryAlbumPage() {
       <label className={dragging ? "upload-dropzone dragging" : "upload-dropzone"} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
         <UploadCloud size={28} />
         <strong>拖拽图片到这里，或点击批量上传</strong>
-        <span>上传后会真实保存到当前相册的本地状态/localStorage 中。</span>
+        <span>上传后会保存到当前相册的本地状态中。</span>
         <input type="file" multiple accept="image/*" onChange={onFileInput} />
       </label>
 
       <section className="masonry-wall">
-        {photos.map((photo) => (
-          <article className="masonry-photo" key={photo.id}>
-            <img src={photo.imageUrl} alt={photo.description || album.name} />
-            <div className="photo-meta-editor">
-              <textarea rows={2} value={photo.description} onChange={(event) => updatePhoto(photo.id, { description: event.target.value })} placeholder="这张照片想记录什么？" />
-            </div>
-            <div className="photo-actions">
-              <button type="button" onClick={() => updateAlbum({ cover: photo.imageUrl })}><Star size={16} />设为封面</button>
-              <button type="button" onClick={() => setPreview(photo)}><Eye size={16} />预览</button>
-              <button type="button" onClick={() => deletePhoto(photo.id)}><Trash2 size={16} />删除</button>
-            </div>
-          </article>
-        ))}
+        {photos.map((photo, index) => {
+          const isCover = album.cover === photo.imageUrl;
+          return (
+            <article className={isCover ? "masonry-photo is-cover" : "masonry-photo"} key={photo.id}>
+              <div className="photo-frame">
+                <img src={photo.imageUrl} alt={photo.description || album.name} />
+                {isCover ? <span className="cover-badge"><CheckCircle2 size={14} />当前封面</span> : null}
+              </div>
+              <div className="photo-meta-editor">
+                <textarea rows={2} value={photo.description} onChange={(event) => updatePhoto(photo.id, { description: event.target.value })} placeholder="这张照片想记录什么？" />
+              </div>
+              <div className="photo-actions">
+                <button type="button" disabled={isCover} onClick={() => updateAlbum({ cover: photo.imageUrl })}><Star size={16} />{isCover ? "已设为封面" : "设为封面"}</button>
+                <button type="button" onClick={() => setPreviewIndex(index)}><Eye size={16} />预览</button>
+                <button type="button" onClick={() => deletePhoto(photo.id)}><Trash2 size={16} />删除</button>
+              </div>
+            </article>
+          );
+        })}
       </section>
 
       {preview ? (
-        <div className="image-preview-modal" onClick={() => setPreview(null)}>
-          <button type="button" onClick={() => setPreview(null)}><X size={18} /></button>
-          <img src={preview.imageUrl} alt={preview.description || album.name} />
-          {preview.description ? <p>{preview.description}</p> : null}
+        <div className="image-preview-modal gallery-preview-modal" onClick={() => setPreviewIndex(null)}>
+          <button className="preview-close" type="button" onClick={() => setPreviewIndex(null)}><X size={18} /></button>
+          {photos.length > 1 ? <button className="preview-nav preview-prev" type="button" onClick={(event) => { event.stopPropagation(); shiftPreview(-1); }}><ChevronLeft size={24} /></button> : null}
+          <figure className="gallery-preview-frame" onClick={(event) => event.stopPropagation()}>
+            <img src={preview.imageUrl} alt={preview.description || album.name} />
+            {preview.description ? <figcaption>{preview.description}</figcaption> : null}
+          </figure>
+          {photos.length > 1 ? <button className="preview-nav preview-next" type="button" onClick={(event) => { event.stopPropagation(); shiftPreview(1); }}><ChevronRight size={24} /></button> : null}
         </div>
       ) : null}
     </div>

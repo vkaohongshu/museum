@@ -49,7 +49,7 @@ export function StudioArticleEditorPage() {
       id: articleId,
       title: previewTitle,
       body,
-      cover: cover || "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+      cover: cover.trim(),
       categoryId,
       tagIds,
       createdAt: existing?.createdAt ?? now,

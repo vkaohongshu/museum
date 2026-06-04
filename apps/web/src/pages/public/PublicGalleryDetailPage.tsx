@@ -45,11 +45,11 @@ export function PublicGalleryDetailPage() {
             {tagsByIds(tags, event.tagIds).map((tag) => <TagPill key={tag.id} item={tag} subtle />)}
           </div>
           <h1>{event.name}</h1>
-          <p>{event.description}</p>
+          {event.description ? <p>{event.description}</p> : null}
           <span>{formatDate(event.date)} · {event.images.length} 张图片</span>
         </div>
       </section>
-      <section className="photo-wall">
+      <section className="photo-wall public-photo-masonry">
         {photos.map((photo, index) => (
           <figure className="photo-tile" key={photo.id}>
             <a href={photo.imageUrl} target="_blank" rel="noreferrer">

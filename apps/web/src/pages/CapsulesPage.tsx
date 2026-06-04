@@ -15,11 +15,11 @@ export function CapsulesPage() {
         description="预留去年今日、某年今日和情绪回顾能力。"
       />
 
-      <section className="capsule-grid">
+      <section className="capsule-grid memory-capsule-grid">
         {capsules.map((capsule) => (
-          <article className="capsule-card" key={capsule.id}>
-            <img src={capsule.image} alt={capsule.title} />
-            <div>
+          <article className="capsule-card memory-capsule-card" key={capsule.id}>
+            {capsule.image ? <img src={capsule.image} alt={capsule.title} /> : <div className="capsule-image-fallback">{capsule.mood}</div>}
+            <div className="memory-capsule-body">
               <span>{formatDate(capsule.date)} · {capsule.mood}</span>
               <h2>{capsule.title}</h2>
               <p>{capsule.body}</p>

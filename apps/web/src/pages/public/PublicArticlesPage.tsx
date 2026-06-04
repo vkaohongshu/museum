@@ -16,8 +16,13 @@ export function PublicArticlesPage() {
       {isError ? <div className="empty-state"><strong>API Error</strong><p>{error?.message}</p></div> : null}
       <section className="card-grid article-card-grid">
         {publicArticles.length ? publicArticles.map((article) => (
-          <Link to={`/articles/${article.id}`} className="content-card article-card" key={article.id}>
-            <img src={article.cover} alt={article.title} />
+          <Link to={`/articles/${article.id}`} className={article.cover ? "content-card article-card" : "content-card article-card article-card-text"} key={article.id}>
+            {article.cover ? <img src={article.cover} alt={article.title} /> : (
+              <div className="article-text-cover">
+                <span>{formatDate(article.createdAt)}</span>
+                <strong>{article.title}</strong>
+              </div>
+            )}
             <div className="content-card-body">
               <div className="meta-line">{formatDate(article.createdAt)} · {article.readMinutes} 分钟阅读</div>
               <h2>{article.title}</h2>
