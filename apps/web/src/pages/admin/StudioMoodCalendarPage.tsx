@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCreateMoodMutation, useUpdateMoodMutation } from "../../api/moods";
 import { useLife } from "../../context/LifeContext";
 import { MoodName, WeatherName } from "../../types";
 import { dateKey } from "../../utils/format";
@@ -14,32 +15,33 @@ function monthDays(month: string) {
 }
 
 export function StudioMoodCalendarPage() {
-  const { moodEntries, setMoodEntries } = useLife();
+  const { moodEntries } = useLife();
+  const createMood = useCreateMoodMutation();
+  const updateMood = useUpdateMoodMutation();
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [selected, setSelected] = useState(`${month}-01`);
   const entry = moodEntries.find((item) => dateKey(item.date) === selected);
 
   function savePatch(patch: Partial<NonNullable<typeof entry>>) {
     const now = new Date().toISOString();
-    setMoodEntries((current) => {
-      const found = current.find((item) => dateKey(item.date) === selected);
-      if (found) return current.map((item) => item.id === found.id ? { ...item, ...patch, updatedAt: now } : item);
-      return [{
-        id: `mood-${Date.now()}`,
-        date: `${selected}T08:00:00.000Z`,
-        mood: "平静",
-        weather: "晴天",
-        note: "",
-        relatedArticleIds: [],
-        relatedMomentIds: [],
-        relatedGalleryIds: [],
-        createdAt: now,
-        updatedAt: now,
-        ...patch
-      }, ...current];
+    const found = moodEntries.find((item) => dateKey(item.date) === selected);
+    if (found) {
+      updateMood.mutate({ id: found.id, mood: { ...found, ...patch, updatedAt: now } });
+      return;
+    }
+    createMood.mutate({
+      date: `${selected}T08:00:00.000Z`,
+      mood: moods[1],
+      weather: weathers[0],
+      note: "",
+      relatedArticleIds: [],
+      relatedMomentIds: [],
+      relatedGalleryIds: [],
+      createdAt: now,
+      updatedAt: now,
+      ...patch
     });
   }
-
   return (
     <div className="page-stack">
       <header className="studio-section-hero panel">
@@ -62,7 +64,7 @@ export function StudioMoodCalendarPage() {
           <h2>{selected}</h2>
           <label>心情<select value={entry?.mood ?? "平静"} onChange={(event) => savePatch({ mood: event.target.value as MoodName })}>{moods.map((mood) => <option key={mood}>{mood}</option>)}</select></label>
           <label>天气<select value={entry?.weather ?? "晴天"} onChange={(event) => savePatch({ weather: event.target.value as WeatherName })}>{weathers.map((weather) => <option key={weather}>{weather}</option>)}</select></label>
-          <label>一句话<textarea rows={4} value={entry?.note ?? ""} onChange={(event) => savePatch({ note: event.target.value })} placeholder="今天的生活状态" /></label>
+          <label>一句话<textarea key={selected} rows={4} defaultValue={entry?.note ?? ""} onBlur={(event) => savePatch({ note: event.target.value })} placeholder="今天的生活状态" /></label>
         </aside>
       </section>
     </div>

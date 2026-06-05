@@ -31,7 +31,7 @@ export async function createCategory(category: CategoryPayload) {
     entity: "categories",
     method: "POST",
     endpoint: "/categories",
-    data: { id, name: category.name, description: category.description, updatedAt: new Date().toISOString() }
+    data: { id, name: category.name, description: category.description, color: category.color, updatedAt: new Date().toISOString() }
   });
 }
 
@@ -40,7 +40,7 @@ export async function updateCategory(id: string, category: CategoryPayload) {
     entity: "categories",
     method: "PUT",
     endpoint: `/categories/${id}`,
-    data: { id, name: category.name, description: category.description, updatedAt: new Date().toISOString() }
+    data: { id, name: category.name, description: category.description, color: category.color, updatedAt: new Date().toISOString() }
   });
 }
 

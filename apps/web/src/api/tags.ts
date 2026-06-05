@@ -32,7 +32,7 @@ export async function createTag(tag: TagPayload) {
     entity: "tags",
     method: "POST",
     endpoint: "/tags",
-    data: { id, name: tag.name, usageCount: tag.usageCount ?? 0, updatedAt: new Date().toISOString() }
+    data: { id, name: tag.name, color: tag.color, usageCount: tag.usageCount ?? 0, updatedAt: new Date().toISOString() }
   });
 }
 
@@ -41,7 +41,7 @@ export async function updateTag(id: string, tag: TagPayload) {
     entity: "tags",
     method: "PUT",
     endpoint: `/tags/${id}`,
-    data: { id, name: tag.name, usageCount: tag.usageCount, updatedAt: new Date().toISOString() }
+    data: { id, name: tag.name, color: tag.color, usageCount: tag.usageCount, updatedAt: new Date().toISOString() }
   });
 }
 

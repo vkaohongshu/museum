@@ -18,7 +18,7 @@ export function LifeMapPage() {
       />
 
       <section className="life-map-layout">
-        <div className="mock-map panel">
+        <div className="life-map-canvas panel">
           <div className="map-grid-bg" />
           {locations.map((location, index) => (
             <button

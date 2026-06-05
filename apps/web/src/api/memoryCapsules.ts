@@ -53,6 +53,9 @@ export async function createMemoryCapsule(capsule: MemoryCapsulePayload) {
   });
 }
 
+export const fetchCapsules = fetchMemoryCapsules;
+export const createCapsule = createMemoryCapsule;
+
 export async function updateMemoryCapsule(id: string, capsule: MemoryCapsulePayload) {
   return queueAndSync({
     entity: "memory_capsules",
@@ -61,6 +64,8 @@ export async function updateMemoryCapsule(id: string, capsule: MemoryCapsulePayl
     data: { ...toApiPayload(capsule), id, updatedAt: new Date().toISOString() }
   });
 }
+
+export const updateCapsule = updateMemoryCapsule;
 
 export async function deleteMemoryCapsule(id: string) {
   await queueAndSync({
@@ -71,17 +76,24 @@ export async function deleteMemoryCapsule(id: string) {
   });
 }
 
+export const deleteCapsule = deleteMemoryCapsule;
+
+function invalidateCapsules() {
+  void queryClient.invalidateQueries({ queryKey: ["capsules"] });
+  void queryClient.invalidateQueries({ queryKey: ["memory-capsules"] });
+}
+
 export function useCreateMemoryCapsuleMutation() {
-  return useMutation({ mutationFn: createMemoryCapsule, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["memory-capsules"] }) });
+  return useMutation({ mutationFn: createMemoryCapsule, onSuccess: invalidateCapsules });
 }
 
 export function useUpdateMemoryCapsuleMutation() {
   return useMutation({
     mutationFn: ({ id, capsule }: { id: string; capsule: MemoryCapsulePayload }) => updateMemoryCapsule(id, capsule),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["memory-capsules"] })
+    onSuccess: invalidateCapsules
   });
 }
 
 export function useDeleteMemoryCapsuleMutation() {
-  return useMutation({ mutationFn: deleteMemoryCapsule, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["memory-capsules"] }) });
+  return useMutation({ mutationFn: deleteMemoryCapsule, onSuccess: invalidateCapsules });
 }

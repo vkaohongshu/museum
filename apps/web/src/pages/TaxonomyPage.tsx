@@ -1,5 +1,7 @@
 import { CSSProperties, FormEvent, useMemo, useState } from "react";
 import { FolderOpen, Hash, Plus, Sparkles, X } from "lucide-react";
+import { useCreateCategoryMutation, useDeleteCategoryMutation, useUpdateCategoryMutation } from "../api/categories";
+import { useCreateTagMutation, useDeleteTagMutation, useUpdateTagMutation } from "../api/tags";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
 import { MemoryJar, MemoryJarItem } from "../components/memory/MemoryJar";
@@ -10,7 +12,13 @@ import { slugifyName } from "../utils/taxonomy";
 const colors = ["#f7b36f", "#89bef5", "#90ddb0", "#f47f9d", "#a891f5", "#f5d86f"];
 
 export function TaxonomyPage() {
-  const { articles, thoughts, galleryEvents, categories, setCategories, tags, setTags } = useLife();
+  const { articles, thoughts, galleryEvents, categories, tags } = useLife();
+  const createCategory = useCreateCategoryMutation();
+  const updateCategory = useUpdateCategoryMutation();
+  const deleteCategory = useDeleteCategoryMutation();
+  const createTag = useCreateTagMutation();
+  const updateTag = useUpdateTagMutation();
+  const deleteTag = useDeleteTagMutation();
   const [categoryName, setCategoryName] = useState("");
   const [categoryDescription, setCategoryDescription] = useState("");
   const [categoryColor, setCategoryColor] = useState(colors[0]);
@@ -47,7 +55,7 @@ export function TaxonomyPage() {
   function addCategory(event: FormEvent) {
     event.preventDefault();
     if (!categoryName.trim()) return;
-    setCategories((current) => [...current, { id: `${slugifyName(categoryName)}-${Date.now()}`, name: categoryName.trim(), description: categoryDescription.trim(), color: categoryColor }]);
+    createCategory.mutate({ id: `${slugifyName(categoryName)}-${Date.now()}`, name: categoryName.trim(), description: categoryDescription.trim(), color: categoryColor });
     setCategoryName("");
     setCategoryDescription("");
   }
@@ -56,7 +64,7 @@ export function TaxonomyPage() {
     event.preventDefault();
     if (!tagName.trim()) return;
     const style = memoryStyleForName(tagName, colors[tags.length % colors.length]);
-    setTags((current) => [...current, { id: `${slugifyName(tagName)}-${Date.now()}`, name: tagName.trim(), color: style.color }]);
+    createTag.mutate({ id: `${slugifyName(tagName)}-${Date.now()}`, name: tagName.trim(), color: style.color });
     setTagName("");
   }
 
@@ -66,28 +74,28 @@ export function TaxonomyPage() {
 
   function updateSelectedCategory(patch: Partial<typeof selectedCategory>) {
     if (!selectedCategory) return;
-    setCategories((current) => current.map((category) => category.id === selectedCategory.id ? { ...category, ...patch } : category));
+    updateCategory.mutate({ id: selectedCategory.id, category: { ...selectedCategory, ...patch } });
   }
 
   function deleteSelectedCategory() {
     if (!selectedCategory) return;
-    setCategories((current) => current.filter((category) => category.id !== selectedCategory.id));
+    deleteCategory.mutate(selectedCategory.id);
     setSelectedCategoryId("");
   }
 
   function updateSelectedTagName(name: string) {
     if (!selectedTag) return;
-    setTags((current) => current.map((item) => item.id === selectedTag.id ? { ...item, name } : item));
+    updateTag.mutate({ id: selectedTag.id, tag: { ...selectedTag, name } });
   }
 
   function updateSelectedTagColor(color: string) {
     if (!selectedTag) return;
-    setTags((current) => current.map((item) => item.id === selectedTag.id ? { ...item, color } : item));
+    updateTag.mutate({ id: selectedTag.id, tag: { ...selectedTag, color } });
   }
 
   function deleteSelectedTag() {
     if (!selectedTag) return;
-    setTags((current) => current.filter((item) => item.id !== selectedTag.id));
+    deleteTag.mutate(selectedTag.id);
     setSelectedTagId("");
   }
 
@@ -149,11 +157,11 @@ export function TaxonomyPage() {
             <p>{categoryUsage.get(selectedCategory.id) ?? 0} 条内容正在归入这个方向。</p>
             <label>
               分类名称
-              <input value={selectedCategory.name} onChange={(event) => updateSelectedCategory({ name: event.target.value })} />
+              <input defaultValue={selectedCategory.name} onBlur={(event) => updateSelectedCategory({ name: event.target.value })} />
             </label>
             <label>
               描述
-              <textarea rows={4} value={selectedCategory.description ?? ""} onChange={(event) => updateSelectedCategory({ description: event.target.value })} />
+              <textarea rows={4} defaultValue={selectedCategory.description ?? ""} onBlur={(event) => updateSelectedCategory({ description: event.target.value })} />
             </label>
             <label>
               颜色
@@ -176,7 +184,7 @@ export function TaxonomyPage() {
             <p>这个标签已经连接了 {tagUsage.get(selectedTag.id) ?? selectedTag.usageCount ?? 0} 条内容。</p>
             <label>
               标签名称
-              <input value={selectedTag.name} onChange={(event) => updateSelectedTagName(event.target.value)} />
+              <input defaultValue={selectedTag.name} onBlur={(event) => updateSelectedTagName(event.target.value)} />
             </label>
             <label>
               记忆球颜色

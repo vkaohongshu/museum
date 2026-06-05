@@ -1,3 +1,4 @@
+import { useUpdateSettingMutation } from "../../api/settings";
 import { PageHeader } from "../../components/PageHeader";
 import { useLife } from "../../context/LifeContext";
 import { SiteSettings } from "../../types";
@@ -11,7 +12,8 @@ const themeCards: { value: SiteSettings["theme"]; name: string; desc: string; co
 ];
 
 export function AdminSettingsPage() {
-  const { settings, setSettings } = useLife();
+  const { settings } = useLife();
+  const updateSetting = useUpdateSettingMutation();
 
   return (
     <div className="page-stack">
@@ -21,26 +23,26 @@ export function AdminSettingsPage() {
         <div className="field-row">
           <label>
             站点名称
-            <input value={settings.siteName} onChange={(event) => setSettings((current) => ({ ...current, siteName: event.target.value }))} placeholder="Link 的人生记录馆" />
+            <input defaultValue={settings.siteName} onBlur={(event) => updateSetting.mutate({ key: "siteName", value: event.target.value })} placeholder="Link 的人生记录馆" />
           </label>
           <label>
             作者昵称
-            <input value={settings.authorNickname} onChange={(event) => setSettings((current) => ({ ...current, authorNickname: event.target.value }))} placeholder="Link" />
+            <input defaultValue={settings.authorNickname} onBlur={(event) => updateSetting.mutate({ key: "authorNickname", value: event.target.value })} placeholder="Link" />
           </label>
         </div>
         <label>
           首页欢迎语
-          <input value={settings.homeWelcome} onChange={(event) => setSettings((current) => ({ ...current, homeWelcome: event.target.value }))} placeholder="今天也要好好生活。" />
+          <input defaultValue={settings.homeWelcome} onBlur={(event) => updateSetting.mutate({ key: "homeWelcome", value: event.target.value })} placeholder="今天也要好好生活。" />
         </label>
         <label>
           站点描述
-          <textarea rows={3} value={settings.siteDescription} onChange={(event) => setSettings((current) => ({ ...current, siteDescription: event.target.value }))} placeholder="记录生活、成长、旅行和那些值得被记住的小瞬间。" />
+          <textarea rows={3} defaultValue={settings.siteDescription} onBlur={(event) => updateSetting.mutate({ key: "siteDescription", value: event.target.value })} placeholder="记录生活、成长、旅行和那些值得被记住的小瞬间。" />
         </label>
       </section>
 
       <section className="theme-card-grid">
         {themeCards.map((theme) => (
-          <button className={settings.theme === theme.value ? "theme-card active" : "theme-card"} key={theme.value} type="button" onClick={() => setSettings((current) => ({ ...current, theme: theme.value }))}>
+          <button className={settings.theme === theme.value ? "theme-card active" : "theme-card"} key={theme.value} type="button" onClick={() => updateSetting.mutate({ key: "theme", value: theme.value })}>
             <div className="theme-card-colors">{theme.colors.map((color) => <span style={{ background: color }} key={color} />)}</div>
             <div className="theme-preview-mini" style={{ background: `linear-gradient(135deg, ${theme.colors[1]}, #fff)` }}>
               <span style={{ background: theme.colors[0] }} />

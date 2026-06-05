@@ -1,12 +1,15 @@
 import { Maximize2, Save } from "lucide-react";
 import { FormEvent, UIEvent, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useCreateArticleMutation, useUpdateArticleMutation } from "../../api/articles";
 import { MarkdownView } from "../../components/MarkdownView";
 import { useLife } from "../../context/LifeContext";
 
 export function StudioArticleEditorPage() {
   const { id } = useParams();
-  const { articles, setArticles, categories, tags } = useLife();
+  const { articles, categories, tags } = useLife();
+  const createArticle = useCreateArticleMutation();
+  const updateArticle = useUpdateArticleMutation();
   const existing = articles.find((article) => article.id === id);
   const [title, setTitle] = useState(existing?.title ?? "");
   const [body, setBody] = useState(existing?.body ?? "# 新文章\n\n从这里开始写。");
@@ -57,7 +60,11 @@ export function StudioArticleEditorPage() {
       readMinutes: Math.max(1, Math.ceil(body.length / 450)),
       relatedItems: existing?.relatedItems ?? []
     };
-    setArticles((current) => existing ? current.map((item) => item.id === existing.id ? next : item) : [next, ...current]);
+    if (existing) {
+      updateArticle.mutate({ id: existing.id, article: next });
+    } else {
+      createArticle.mutate(next);
+    }
   }
 
   return (

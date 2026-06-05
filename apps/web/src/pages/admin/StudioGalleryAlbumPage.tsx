@@ -1,6 +1,7 @@
 import { ChangeEvent, DragEvent, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Eye, Star, Trash2, UploadCloud, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { useDeleteAlbumPhotoMutation, useUpdateAlbumMutation, useUpdateAlbumPhotoMutation, useUploadAlbumPhotosMutation } from "../../api/albums";
 import { useLife } from "../../context/LifeContext";
 import { GalleryImage } from "../../types";
 
@@ -9,24 +10,15 @@ type LegacyGalleryImage = GalleryImage & {
   title?: string;
 };
 
-function filesToImages(files: File[]) {
-  const now = new Date().toISOString();
-  return Promise.all(files.map((file) => new Promise<GalleryImage>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve({
-      id: `photo-${Date.now()}-${file.name}`,
-      imageUrl: String(reader.result),
-      description: "",
-      createdAt: now
-    });
-    reader.readAsDataURL(file);
-  })));
-}
-
 export function StudioGalleryAlbumPage() {
   const { id } = useParams();
-  const { galleryEvents, setGalleryEvents, categories, tags } = useLife();
+  const { galleryEvents, categories, tags } = useLife();
   const album = galleryEvents.find((item) => item.id === id) ?? galleryEvents[0];
+  const albumId = album?.id ?? "";
+  const updateAlbumMutation = useUpdateAlbumMutation();
+  const uploadPhotosMutation = useUploadAlbumPhotosMutation(albumId);
+  const updatePhotoMutation = useUpdateAlbumPhotoMutation(albumId);
+  const deletePhotoMutation = useDeleteAlbumPhotoMutation(albumId);
   const [dragging, setDragging] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
@@ -49,26 +41,12 @@ export function StudioGalleryAlbumPage() {
   const preview = previewIndex === null ? null : photos[previewIndex];
 
   function updateAlbum(patch: Partial<typeof album>) {
-    setGalleryEvents((current) => current.map((item) => item.id === album.id ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item));
-  }
-
-  function updatePhotos(nextPhotos: GalleryImage[]) {
-    updateAlbum({
-      imageDetails: nextPhotos,
-      images: nextPhotos.map((photo) => photo.imageUrl),
-      cover: album.cover || nextPhotos[0]?.imageUrl || ""
-    });
+    updateAlbumMutation.mutate({ id: album.id, album: { ...album, ...patch } });
   }
 
   async function addFiles(fileList: FileList | null) {
     if (!fileList?.length) return;
-    const nextImages = await filesToImages(Array.from(fileList));
-    const nextPhotos = [...photos, ...nextImages];
-    updateAlbum({
-      imageDetails: nextPhotos,
-      images: nextPhotos.map((photo) => photo.imageUrl),
-      cover: album.cover || nextImages[0]?.imageUrl || ""
-    });
+    uploadPhotosMutation.mutate({ files: Array.from(fileList) });
   }
 
   function onDrop(event: DragEvent) {
@@ -83,17 +61,12 @@ export function StudioGalleryAlbumPage() {
   }
 
   function updatePhoto(id: string, patch: Partial<GalleryImage>) {
-    updatePhotos(photos.map((photo) => photo.id === id ? { ...photo, ...patch } : photo));
+    const photo = photos.find((item) => item.id === id);
+    updatePhotoMutation.mutate({ id, description: patch.description ?? photo?.description ?? "" });
   }
 
   function deletePhoto(id: string) {
-    const target = photos.find((photo) => photo.id === id);
-    const nextPhotos = photos.filter((photo) => photo.id !== id);
-    updateAlbum({
-      imageDetails: nextPhotos,
-      images: nextPhotos.map((photo) => photo.imageUrl),
-      cover: album.cover === target?.imageUrl ? nextPhotos[0]?.imageUrl || "" : album.cover
-    });
+    deletePhotoMutation.mutate(id);
     if (previewIndex !== null) setPreviewIndex(null);
   }
 
@@ -109,12 +82,12 @@ export function StudioGalleryAlbumPage() {
       <section className="album-editor-hero panel">
         {album.cover ? <img src={album.cover} alt={album.name} /> : <div className="album-empty-cover"><UploadCloud size={38} /><span>还没有封面</span></div>}
         <div className="album-info-form">
-          <input className="writer-title-input" value={album.name} onChange={(event) => updateAlbum({ name: event.target.value })} />
+          <input className="writer-title-input" defaultValue={album.name} onBlur={(event) => updateAlbum({ name: event.target.value })} />
           <div className="field-row">
-            <input type="date" value={album.date.slice(0, 10)} onChange={(event) => updateAlbum({ date: `${event.target.value}T09:00:00.000Z` })} />
-            <input value={album.location ?? ""} onChange={(event) => updateAlbum({ location: event.target.value })} placeholder="地点" />
+            <input type="date" defaultValue={album.date.slice(0, 10)} onBlur={(event) => updateAlbum({ date: `${event.target.value}T09:00:00.000Z` })} />
+            <input defaultValue={album.location ?? ""} onBlur={(event) => updateAlbum({ location: event.target.value })} placeholder="地点" />
           </div>
-          <textarea rows={4} value={album.description} onChange={(event) => updateAlbum({ description: event.target.value })} />
+          <textarea rows={4} defaultValue={album.description} onBlur={(event) => updateAlbum({ description: event.target.value })} />
           <div className="field-row">
             <select value={album.categoryId} onChange={(event) => updateAlbum({ categoryId: event.target.value })}>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>
             <div className="checkbox-cloud">{tags.map((tag) => <span key={tag.id}><input id={`album-detail-tag-${tag.id}`} type="checkbox" checked={album.tagIds.includes(tag.id)} onChange={(event) => updateAlbum({ tagIds: event.target.checked ? [...album.tagIds, tag.id] : album.tagIds.filter((tagId) => tagId !== tag.id) })} /><label htmlFor={`album-detail-tag-${tag.id}`}>{tag.name}</label></span>)}</div>
@@ -139,7 +112,7 @@ export function StudioGalleryAlbumPage() {
                 {isCover ? <span className="cover-badge"><CheckCircle2 size={14} />当前封面</span> : null}
               </div>
               <div className="photo-meta-editor">
-                <textarea rows={2} value={photo.description} onChange={(event) => updatePhoto(photo.id, { description: event.target.value })} placeholder="这张照片想记录什么？" />
+                <textarea rows={2} defaultValue={photo.description} onBlur={(event) => updatePhoto(photo.id, { description: event.target.value })} placeholder="这张照片想记录什么？" />
               </div>
               <div className="photo-actions">
                 <button type="button" disabled={isCover} onClick={() => updateAlbum({ cover: photo.imageUrl })}><Star size={16} />{isCover ? "已设为封面" : "设为封面"}</button>

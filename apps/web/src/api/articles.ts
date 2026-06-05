@@ -36,6 +36,22 @@ export async function fetchArticles(): Promise<Article[]> {
   });
 }
 
+export async function fetchArticle(id: string): Promise<Article> {
+  const { data: item } = await apiClient.get<ApiArticle>(`/articles/${id}`);
+  const body = item.body ?? item.content ?? "";
+  return {
+    id: item.id,
+    title: item.title,
+    body,
+    categoryId: item.categoryId ?? "",
+    tagIds: item.tagIds ?? [],
+    cover: item.coverUrl ?? item.cover_url ?? "",
+    createdAt: item.createdAt ?? new Date().toISOString(),
+    updatedAt: item.updatedAt,
+    readMinutes: Math.max(1, Math.ceil(body.length / 450))
+  };
+}
+
 export type ArticlePayload = Partial<Article> & {
   content?: string;
   coverUrl?: string;

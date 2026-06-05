@@ -1,5 +1,6 @@
 import { CSSProperties, FormEvent, useMemo, useState } from "react";
 import { Eye, MapPin, PenLine, Plane, ShoppingBag, Sparkles, Trash2, X } from "lucide-react";
+import { useCreateInspirationMutation, useDeleteInspirationMutation, useUpdateInspirationMutation } from "../../api/inspirations";
 import { useLife } from "../../context/LifeContext";
 import { InspirationStatus, InspirationType } from "../../types";
 import { formatShortDate } from "../../utils/format";
@@ -17,7 +18,10 @@ const typeIcons = {
 } satisfies Record<InspirationType, typeof PenLine>;
 
 export function StudioInspirationsPage() {
-  const { inspirations, setInspirations } = useLife();
+  const { inspirations } = useLife();
+  const createInspiration = useCreateInspirationMutation();
+  const updateInspiration = useUpdateInspirationMutation();
+  const deleteInspiration = useDeleteInspirationMutation();
   const [filter, setFilter] = useState<"全部" | InspirationType>("全部");
   const [title, setTitle] = useState("");
   const [type, setType] = useState<InspirationType>("想写");
@@ -39,14 +43,14 @@ export function StudioInspirationsPage() {
       createdAt: now,
       updatedAt: now
     };
-    setInspirations((current) => [next, ...current]);
+    createInspiration.mutate(next);
     setTitle("");
     setActiveId(next.id);
   }
 
   function updateActive(patch: Partial<typeof active>) {
     if (!active) return;
-    setInspirations((current) => current.map((item) => item.id === active.id ? { ...item, ...patch, updatedAt: new Date().toISOString() } : item));
+    updateInspiration.mutate({ id: active.id, inspiration: { ...active, ...patch, updatedAt: new Date().toISOString() } });
   }
 
   return (
@@ -75,7 +79,7 @@ export function StudioInspirationsPage() {
             <article className="idea-card" key={idea.id} onClick={() => setActiveId(idea.id)}>
               <div className="idea-card-top">
                 <span><Icon size={17} />{idea.type}</span>
-                <select value={idea.status} onClick={(event) => event.stopPropagation()} onChange={(event) => setInspirations((current) => current.map((item) => item.id === idea.id ? { ...item, status: event.target.value as InspirationStatus, updatedAt: new Date().toISOString() } : item))}>
+                <select value={idea.status} onClick={(event) => event.stopPropagation()} onChange={(event) => updateInspiration.mutate({ id: idea.id, inspiration: { ...idea, status: event.target.value as InspirationStatus } })}>
                   {statuses.map((status) => <option key={status}>{status}</option>)}
                 </select>
               </div>
@@ -84,7 +88,7 @@ export function StudioInspirationsPage() {
               <div className="pill-row">{idea.tags.map((tag) => <span className="pill pill-subtle" style={{ "--pill-color": "#ffb84d" } as CSSProperties} key={tag}>{tag}</span>)}</div>
               <footer>
                 <small>{formatShortDate(idea.createdAt)}</small>
-                <button type="button" onClick={(event) => { event.stopPropagation(); setInspirations((current) => current.filter((item) => item.id !== idea.id)); }}><Trash2 size={15} />删除</button>
+                <button type="button" onClick={(event) => { event.stopPropagation(); deleteInspiration.mutate(idea.id); }}><Trash2 size={15} />删除</button>
               </footer>
             </article>
           );
@@ -98,11 +102,11 @@ export function StudioInspirationsPage() {
             <span className="eyebrow">Inspiration</span>
             <label>
               标题
-              <input value={active.title} onChange={(event) => updateActive({ title: event.target.value })} />
+              <input defaultValue={active.title} onBlur={(event) => updateActive({ title: event.target.value })} />
             </label>
             <label>
               内容
-              <textarea rows={8} value={active.content} onChange={(event) => updateActive({ content: event.target.value })} />
+              <textarea rows={8} defaultValue={active.content} onBlur={(event) => updateActive({ content: event.target.value })} />
             </label>
             <button className="primary-button" type="button" onClick={() => setActiveId(null)}>保存</button>
           </aside>

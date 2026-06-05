@@ -48,7 +48,11 @@ export async function pushPendingChanges() {
     queryClient.invalidateQueries({ queryKey: ["categories"] }),
     queryClient.invalidateQueries({ queryKey: ["tags"] }),
     queryClient.invalidateQueries({ queryKey: ["settings"] }),
+    queryClient.invalidateQueries({ queryKey: ["capsules"] }),
     queryClient.invalidateQueries({ queryKey: ["memory-capsules"] }),
+    queryClient.invalidateQueries({ queryKey: ["inspirations"] }),
+    queryClient.invalidateQueries({ queryKey: ["moods"] }),
+    queryClient.invalidateQueries({ queryKey: ["locations"] }),
     queryClient.invalidateQueries({ queryKey: ["sync-status"] })
   ]);
 

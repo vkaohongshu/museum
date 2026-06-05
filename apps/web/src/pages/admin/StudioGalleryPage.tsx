@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react";
 import { ImagePlus, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCreateAlbumMutation } from "../../api/albums";
 import { TagPill } from "../../components/TagPill";
 import { useLife } from "../../context/LifeContext";
 
 export function StudioGalleryPage() {
-  const { galleryEvents, setGalleryEvents, categories, tags } = useLife();
+  const { galleryEvents, categories, tags } = useLife();
+  const createAlbumMutation = useCreateAlbumMutation();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -29,9 +31,7 @@ export function StudioGalleryPage() {
     event.preventDefault();
     if (!name.trim()) return;
     const now = new Date().toISOString();
-    const id = `gallery-${Date.now()}`;
-    setGalleryEvents((current) => [{
-      id,
+    createAlbumMutation.mutate({
       name: name.trim(),
       description: description.trim(),
       date: `${date}T09:00:00.000Z`,
@@ -45,7 +45,7 @@ export function StudioGalleryPage() {
       categoryId,
       tagIds,
       relatedItems: []
-    }, ...current]);
+    });
     reset();
     setOpen(false);
   }

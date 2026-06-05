@@ -1,12 +1,16 @@
 import { ImagePlus, Send, Trash2 } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { useCreateMomentMutation, useDeleteMomentMutation, useUpdateMomentMutation } from "../../api/moments";
 import { TagPill } from "../../components/TagPill";
 import { useLife } from "../../context/LifeContext";
 import { formatShortDate } from "../../utils/format";
 import { tagsByIds } from "../../utils/taxonomy";
 
 export function StudioMomentsPage() {
-  const { thoughts, setThoughts, categories, tags } = useLife();
+  const { thoughts, categories, tags } = useLife();
+  const createMoment = useCreateMomentMutation();
+  const updateMoment = useUpdateMomentMutation();
+  const deleteMoment = useDeleteMomentMutation();
   const [content, setContent] = useState("");
   const [imageText, setImageText] = useState("");
 
@@ -14,8 +18,7 @@ export function StudioMomentsPage() {
     event.preventDefault();
     if (!content.trim()) return;
     const now = new Date().toISOString();
-    setThoughts((current) => [{
-      id: `thought-${Date.now()}`,
+    createMoment.mutate({
       content,
       images: imageText.split(/\n|,/).map((item) => item.trim()).filter(Boolean),
       categoryId: categories[0]?.id ?? "life",
@@ -23,7 +26,7 @@ export function StudioMomentsPage() {
       createdAt: now,
       updatedAt: now,
       relatedItems: []
-    }, ...current]);
+    });
     setContent("");
     setImageText("");
   }
@@ -43,11 +46,11 @@ export function StudioMomentsPage() {
         {thoughts.map((moment) => (
           <article className="moment-masonry-card" key={moment.id}>
             {moment.images.length ? <div className="moment-card-images">{moment.images.map((image) => <img src={image} alt="碎碎念配图" key={image} />)}</div> : null}
-            <textarea value={moment.content} onChange={(event) => setThoughts((current) => current.map((item) => item.id === moment.id ? { ...item, content: event.target.value, updatedAt: new Date().toISOString() } : item))} />
+            <textarea defaultValue={moment.content} onBlur={(event) => updateMoment.mutate({ id: moment.id, moment: { ...moment, content: event.target.value } })} />
             <div className="pill-row">{tagsByIds(tags, moment.tagIds).map((tag) => <TagPill key={tag.id} item={tag} subtle />)}</div>
             <footer>
               <time>{formatShortDate(moment.createdAt)}</time>
-              <button type="button" onClick={() => setThoughts((current) => current.filter((item) => item.id !== moment.id))}><Trash2 size={15} />删除</button>
+              <button type="button" onClick={() => deleteMoment.mutate(moment.id)}><Trash2 size={15} />删除</button>
             </footer>
           </article>
         ))}

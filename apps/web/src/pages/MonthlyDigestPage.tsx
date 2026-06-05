@@ -40,7 +40,7 @@ export function MonthlyDigestPage() {
       <section className="digest-cover panel">
         <span>{month} Life Magazine</span>
         <h2>本月生活小报已生成</h2>
-        <p>这一页先基于 mock/localStorage 数据生成静态结构，未来可以接 AI 总结。</p>
+        <p>这一页先基于 API 数据生成静态结构，未来可以接 AI 总结。</p>
         <button className="primary-button" type="button">生成小报</button>
       </section>
 

@@ -17,6 +17,9 @@ const services = {
   categories: createCrudService("categories"),
   tags: createCrudService("tags"),
   memory_capsules: createCrudService("memoryCapsules"),
+  inspirations: createCrudService("inspirations"),
+  moodRecords: createCrudService("moodRecords"),
+  locations: createCrudService("locations"),
   settings: createCrudService("settings")
 };
 
@@ -28,6 +31,9 @@ const entityKeyMap: Record<SyncEntityName, EntityKey> = {
   categories: "categories",
   tags: "tags",
   memory_capsules: "memoryCapsules",
+  inspirations: "inspirations",
+  moodRecords: "moodRecords",
+  locations: "locations",
   settings: "settings"
 };
 
@@ -46,6 +52,9 @@ syncController.get("/pull", async (request, response, next) => {
       categories: await services.categories.list(since, await resolveOwnerId(request)),
       tags: await services.tags.list(since, await resolveOwnerId(request)),
       memoryCapsules: await services.memory_capsules.list(since, await resolveOwnerId(request)),
+      inspirations: await services.inspirations.list(since, await resolveOwnerId(request)),
+      moodRecords: await services.moodRecords.list(since, await resolveOwnerId(request)),
+      locations: await services.locations.list(since, await resolveOwnerId(request)),
       settings: await services.settings.list(since, await resolveOwnerId(request))
     });
   } catch (error) {

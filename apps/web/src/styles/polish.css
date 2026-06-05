@@ -415,7 +415,7 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
 }
 
-.mock-map {
+.life-map-canvas {
   min-height: clamp(360px, 44vw, 560px);
   overflow: hidden;
 }
@@ -437,7 +437,7 @@
   overflow: visible;
 }
 
-.admin-route .mock-map,
+.admin-route .life-map-canvas,
 .admin-route .location-detail {
   height: auto;
   overflow: visible;

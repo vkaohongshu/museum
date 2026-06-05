@@ -16,6 +16,7 @@ export interface Article extends Timestamped {
 export interface Tag extends Timestamped {
   id: ID;
   name: string;
+  color?: string | null;
   usageCount: number;
 }
 
@@ -44,6 +45,7 @@ export interface AlbumPhoto extends Timestamped {
 export interface Category extends Timestamped {
   id: ID;
   name: string;
+  color?: string | null;
   description?: string | null;
 }
 
@@ -61,6 +63,40 @@ export interface Setting extends Timestamped {
   value: unknown;
 }
 
+export interface Inspiration extends Timestamped {
+  id: ID;
+  title: string;
+  content: string;
+  type?: string | null;
+  status?: string | null;
+  tags?: string[] | null;
+}
+
+export interface MoodRecord extends Timestamped {
+  id: ID;
+  date: string;
+  mood: string;
+  weather?: string | null;
+  note?: string | null;
+  relatedArticleIds?: string[] | null;
+  relatedMomentIds?: string[] | null;
+  relatedGalleryIds?: string[] | null;
+}
+
+export interface LocationRecord extends Timestamped {
+  id: ID;
+  name: string;
+  city?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  description?: string | null;
+  coverImage?: string | null;
+  relatedArticleIds?: string[] | null;
+  relatedMomentIds?: string[] | null;
+  relatedGalleryIds?: string[] | null;
+}
+
 export type SyncEntityName =
   | "articles"
   | "moments"
@@ -69,6 +105,9 @@ export type SyncEntityName =
   | "categories"
   | "tags"
   | "memory_capsules"
+  | "inspirations"
+  | "moodRecords"
+  | "locations"
   | "settings";
 
 export interface SyncPullResponse {
@@ -80,6 +119,9 @@ export interface SyncPullResponse {
   categories: Category[];
   tags: Tag[];
   memoryCapsules: MemoryCapsule[];
+  inspirations: Inspiration[];
+  moodRecords: MoodRecord[];
+  locations: LocationRecord[];
   settings: Setting[];
 }
 

@@ -25,13 +25,13 @@ export const entityConfigs = {
   },
   categories: {
     table: "categories",
-    writable: ["name", "description"],
+    writable: ["name", "description", "color"],
     required: ["name"],
     userScoped: true
   },
   tags: {
     table: "tags",
-    writable: ["name", "usage_count"],
+    writable: ["name", "color", "usage_count"],
     required: ["name"],
     userScoped: true
   },

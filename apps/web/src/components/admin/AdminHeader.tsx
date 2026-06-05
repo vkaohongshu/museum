@@ -1,12 +1,13 @@
 import { LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { clearAdminSession } from "../../utils/storage";
+import { useAuth } from "../../context/AuthContext";
 
 export function AdminHeader() {
   const navigate = useNavigate();
+  const { logout: logoutRequest } = useAuth();
 
-  function logout() {
-    clearAdminSession();
+  async function logout() {
+    await logoutRequest();
     navigate("/");
   }
 

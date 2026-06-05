@@ -109,6 +109,10 @@ export async function uploadAlbumPhotos(albumId: string, files: File[], descript
   });
 }
 
+export async function uploadAlbumPhoto(albumId: string, file: File, description = "") {
+  return uploadAlbumPhotos(albumId, [file], description);
+}
+
 export async function updateAlbumPhoto(albumId: string, id: string, description: string) {
   return queueAndSync({
     entity: "album_photos",
@@ -142,6 +146,20 @@ export function useDeleteAlbumMutation() {
 export function useUploadAlbumPhotosMutation(albumId: string) {
   return useMutation({
     mutationFn: ({ files, description }: { files: File[]; description?: string }) => uploadAlbumPhotos(albumId, files, description),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
+  });
+}
+
+export function useUpdateAlbumPhotoMutation(albumId: string) {
+  return useMutation({
+    mutationFn: ({ id, description }: { id: string; description: string }) => updateAlbumPhoto(albumId, id, description),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
+  });
+}
+
+export function useDeleteAlbumPhotoMutation(albumId: string) {
+  return useMutation({
+    mutationFn: (id: string) => deleteAlbumPhoto(albumId, id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
   });
 }
