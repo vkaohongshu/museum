@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { InspirationItem } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 
 type ApiInspiration = {
@@ -81,16 +80,15 @@ export async function deleteInspiration(id: string) {
 }
 
 export function useCreateInspirationMutation() {
-  return useMutation({ mutationFn: createInspiration, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["inspirations"] }) });
+  return useMutation({ mutationFn: createInspiration });
 }
 
 export function useUpdateInspirationMutation() {
   return useMutation({
-    mutationFn: ({ id, inspiration }: { id: string; inspiration: InspirationPayload }) => updateInspiration(id, inspiration),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["inspirations"] })
+    mutationFn: ({ id, inspiration }: { id: string; inspiration: InspirationPayload }) => updateInspiration(id, inspiration)
   });
 }
 
 export function useDeleteInspirationMutation() {
-  return useMutation({ mutationFn: deleteInspiration, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["inspirations"] }) });
+  return useMutation({ mutationFn: deleteInspiration });
 }

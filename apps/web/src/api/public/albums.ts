@@ -1,5 +1,6 @@
 import { GalleryEvent, GalleryImage } from "../../types";
 import { apiClient } from "../client";
+import { resolveMediaUrl } from "../media";
 
 type ApiAlbumPhoto = {
   id: string;
@@ -25,7 +26,7 @@ export async function fetchPublicAlbums(): Promise<GalleryEvent[]> {
   return albums.map((album) => {
     const imageDetails = (album.photos ?? []).map<GalleryImage>((photo) => ({
       id: photo.id,
-      imageUrl: photo.imageUrl ?? photo.image_url ?? "",
+      imageUrl: resolveMediaUrl(photo.imageUrl ?? photo.image_url),
       description: photo.description ?? "",
       createdAt: photo.createdAt ?? new Date().toISOString(),
       updatedAt: photo.updatedAt

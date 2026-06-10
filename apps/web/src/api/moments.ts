@@ -1,6 +1,6 @@
 import { Thought } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
+import { resolveMediaUrl } from "./media";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -18,7 +18,7 @@ type ApiMoment = {
 export async function fetchMoments(): Promise<Thought[]> {
   const { data } = await apiClient.get<ApiMoment[]>("/moments");
   return data.map((item) => {
-    const image = item.imageUrl ?? item.image_url;
+    const image = resolveMediaUrl(item.imageUrl ?? item.image_url);
     return {
       id: item.id,
       content: item.content,
@@ -73,13 +73,13 @@ export async function deleteMoment(id: string) {
 }
 
 export function useCreateMomentMutation() {
-  return useMutation({ mutationFn: createMoment, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moments"] }) });
+  return useMutation({ mutationFn: createMoment });
 }
 
 export function useUpdateMomentMutation() {
-  return useMutation({ mutationFn: ({ id, moment }: { id: string; moment: MomentPayload }) => updateMoment(id, moment), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moments"] }) });
+  return useMutation({ mutationFn: ({ id, moment }: { id: string; moment: MomentPayload }) => updateMoment(id, moment) });
 }
 
 export function useDeleteMomentMutation() {
-  return useMutation({ mutationFn: deleteMoment, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moments"] }) });
+  return useMutation({ mutationFn: deleteMoment });
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { S3Client, CreateBucketCommand, HeadBucketCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, CreateBucketCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { config } from "../config.js";
 
 const s3 = new S3Client({
@@ -40,9 +40,19 @@ export async function uploadImage(file: Express.Multer.File, userId: string, sco
     })
   );
   return {
-    url: `${config.s3.publicUrl.replace(/\/$/, "")}/${key}`,
+    url: `${config.apiBaseUrl.replace(/\/$/, "")}/media/${key}`,
     key,
     bucket: config.s3.bucket,
     contentType: file.mimetype
+  };
+}
+
+export async function getStoredImage(key: string) {
+  const result = await s3.send(new GetObjectCommand({ Bucket: config.s3.bucket, Key: key }));
+  return {
+    body: result.Body,
+    contentType: result.ContentType,
+    contentLength: result.ContentLength,
+    cacheControl: result.CacheControl
   };
 }

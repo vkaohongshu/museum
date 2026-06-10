@@ -1,6 +1,5 @@
 import { MemoryCapsule } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -78,22 +77,16 @@ export async function deleteMemoryCapsule(id: string) {
 
 export const deleteCapsule = deleteMemoryCapsule;
 
-function invalidateCapsules() {
-  void queryClient.invalidateQueries({ queryKey: ["capsules"] });
-  void queryClient.invalidateQueries({ queryKey: ["memory-capsules"] });
-}
-
 export function useCreateMemoryCapsuleMutation() {
-  return useMutation({ mutationFn: createMemoryCapsule, onSuccess: invalidateCapsules });
+  return useMutation({ mutationFn: createMemoryCapsule });
 }
 
 export function useUpdateMemoryCapsuleMutation() {
   return useMutation({
-    mutationFn: ({ id, capsule }: { id: string; capsule: MemoryCapsulePayload }) => updateMemoryCapsule(id, capsule),
-    onSuccess: invalidateCapsules
+    mutationFn: ({ id, capsule }: { id: string; capsule: MemoryCapsulePayload }) => updateMemoryCapsule(id, capsule)
   });
 }
 
 export function useDeleteMemoryCapsuleMutation() {
-  return useMutation({ mutationFn: deleteMemoryCapsule, onSuccess: invalidateCapsules });
+  return useMutation({ mutationFn: deleteMemoryCapsule });
 }

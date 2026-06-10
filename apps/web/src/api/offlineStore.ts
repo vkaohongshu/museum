@@ -16,6 +16,7 @@ export interface PendingMutation {
 
 export interface PendingUpload {
   id: string;
+  entity?: SyncEntityName;
   endpoint: string;
   fieldName: string;
   files: Array<{ name: string; type: string; blob: Blob }>;
@@ -93,6 +94,7 @@ export async function enqueueMutation(input: Omit<PendingMutation, "id" | "times
 export async function enqueueUpload(input: Omit<PendingUpload, "id" | "timestamp" | "status"> & { id?: string }) {
   const upload: PendingUpload = {
     id: input.id ?? crypto.randomUUID(),
+    entity: input.entity,
     endpoint: input.endpoint,
     fieldName: input.fieldName,
     files: input.files,

@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { LocationRecord } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
+import { resolveMediaUrl } from "./media";
 import { queueAndSync } from "./sync";
 
 type ApiLocation = {
@@ -46,7 +46,7 @@ export async function fetchLocations(): Promise<LocationRecord[]> {
     latitude: toNumber(item.latitude),
     longitude: toNumber(item.longitude),
     description: item.description ?? "",
-    coverImage: item.coverImage ?? "",
+    coverImage: resolveMediaUrl(item.coverImage),
     relatedArticleIds: parseIds(item.relatedArticleIds),
     relatedMomentIds: parseIds(item.relatedMomentIds),
     relatedGalleryIds: parseIds(item.relatedGalleryIds),
@@ -101,16 +101,15 @@ export async function deleteLocation(id: string) {
 }
 
 export function useCreateLocationMutation() {
-  return useMutation({ mutationFn: createLocation, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["locations"] }) });
+  return useMutation({ mutationFn: createLocation });
 }
 
 export function useUpdateLocationMutation() {
   return useMutation({
-    mutationFn: ({ id, location }: { id: string; location: LocationPayload }) => updateLocation(id, location),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["locations"] })
+    mutationFn: ({ id, location }: { id: string; location: LocationPayload }) => updateLocation(id, location)
   });
 }
 
 export function useDeleteLocationMutation() {
-  return useMutation({ mutationFn: deleteLocation, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["locations"] }) });
+  return useMutation({ mutationFn: deleteLocation });
 }

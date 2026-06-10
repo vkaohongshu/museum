@@ -1,6 +1,6 @@
 import { GalleryEvent, GalleryImage } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
+import { resolveMediaUrl } from "./media";
 import { queueAndSync, queueUploadAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -33,7 +33,7 @@ export async function fetchAlbums(): Promise<GalleryEvent[]> {
   return albums.map((album) => {
     const imageDetails = (album.photos ?? []).map<GalleryImage>((photo) => ({
       id: photo.id,
-      imageUrl: photo.imageUrl ?? photo.image_url ?? "",
+      imageUrl: resolveMediaUrl(photo.imageUrl ?? photo.image_url),
       description: photo.description ?? "",
       createdAt: photo.createdAt ?? new Date().toISOString(),
       updatedAt: photo.updatedAt
@@ -102,6 +102,7 @@ export async function fetchAlbumPhotos(albumId: string) {
 
 export async function uploadAlbumPhotos(albumId: string, files: File[], description = "") {
   return queueUploadAndSync({
+    entity: "album_photos",
     endpoint: `/albums/${albumId}/photos`,
     fieldName: "images",
     files: files.map((file) => ({ name: file.name, type: file.type, blob: file })),
@@ -132,34 +133,31 @@ export async function deleteAlbumPhoto(albumId: string, id: string) {
 }
 
 export function useCreateAlbumMutation() {
-  return useMutation({ mutationFn: createAlbum, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] }) });
+  return useMutation({ mutationFn: createAlbum });
 }
 
 export function useUpdateAlbumMutation() {
-  return useMutation({ mutationFn: ({ id, album }: { id: string; album: AlbumPayload }) => updateAlbum(id, album), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] }) });
+  return useMutation({ mutationFn: ({ id, album }: { id: string; album: AlbumPayload }) => updateAlbum(id, album) });
 }
 
 export function useDeleteAlbumMutation() {
-  return useMutation({ mutationFn: deleteAlbum, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] }) });
+  return useMutation({ mutationFn: deleteAlbum });
 }
 
 export function useUploadAlbumPhotosMutation(albumId: string) {
   return useMutation({
-    mutationFn: ({ files, description }: { files: File[]; description?: string }) => uploadAlbumPhotos(albumId, files, description),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
+    mutationFn: ({ files, description }: { files: File[]; description?: string }) => uploadAlbumPhotos(albumId, files, description)
   });
 }
 
 export function useUpdateAlbumPhotoMutation(albumId: string) {
   return useMutation({
-    mutationFn: ({ id, description }: { id: string; description: string }) => updateAlbumPhoto(albumId, id, description),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
+    mutationFn: ({ id, description }: { id: string; description: string }) => updateAlbumPhoto(albumId, id, description)
   });
 }
 
 export function useDeleteAlbumPhotoMutation(albumId: string) {
   return useMutation({
-    mutationFn: (id: string) => deleteAlbumPhoto(albumId, id),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["albums"] })
+    mutationFn: (id: string) => deleteAlbumPhoto(albumId, id)
   });
 }

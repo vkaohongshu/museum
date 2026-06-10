@@ -5,6 +5,7 @@ import { authController } from "./controllers/authController.js";
 import { backupController } from "./controllers/backupController.js";
 import { crudController } from "./controllers/crudController.js";
 import { momentsController } from "./controllers/momentsController.js";
+import { mediaController } from "./controllers/mediaController.js";
 import { publicController } from "./controllers/publicController.js";
 import { settingsController } from "./controllers/settingsController.js";
 import { syncController } from "./controllers/syncController.js";
@@ -18,6 +19,7 @@ routes.get("/health", (_request, response) => {
 });
 
 routes.use("/auth", authController);
+routes.use("/media", mediaController);
 routes.use("/public", publicController);
 routes.use("/admin/backup", requireAuth, backupController);
 routes.use(requireWriteAuth);

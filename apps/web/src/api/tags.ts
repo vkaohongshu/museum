@@ -1,6 +1,5 @@
 import { Tag } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -55,13 +54,13 @@ export async function deleteTag(id: string) {
 }
 
 export function useCreateTagMutation() {
-  return useMutation({ mutationFn: createTag, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tags"] }) });
+  return useMutation({ mutationFn: createTag });
 }
 
 export function useUpdateTagMutation() {
-  return useMutation({ mutationFn: ({ id, tag }: { id: string; tag: TagPayload }) => updateTag(id, tag), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tags"] }) });
+  return useMutation({ mutationFn: ({ id, tag }: { id: string; tag: TagPayload }) => updateTag(id, tag) });
 }
 
 export function useDeleteTagMutation() {
-  return useMutation({ mutationFn: deleteTag, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tags"] }) });
+  return useMutation({ mutationFn: deleteTag });
 }

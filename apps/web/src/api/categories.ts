@@ -1,6 +1,5 @@
 import { Category } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -54,13 +53,13 @@ export async function deleteCategory(id: string) {
 }
 
 export function useCreateCategoryMutation() {
-  return useMutation({ mutationFn: createCategory, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["categories"] }) });
+  return useMutation({ mutationFn: createCategory });
 }
 
 export function useUpdateCategoryMutation() {
-  return useMutation({ mutationFn: ({ id, category }: { id: string; category: CategoryPayload }) => updateCategory(id, category), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["categories"] }) });
+  return useMutation({ mutationFn: ({ id, category }: { id: string; category: CategoryPayload }) => updateCategory(id, category) });
 }
 
 export function useDeleteCategoryMutation() {
-  return useMutation({ mutationFn: deleteCategory, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["categories"] }) });
+  return useMutation({ mutationFn: deleteCategory });
 }

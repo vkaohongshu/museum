@@ -1,6 +1,5 @@
 import { SiteSettings } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -50,7 +49,6 @@ type UpdateSettingVariables = {
 
 export function useUpdateSettingMutation() {
   return useMutation({
-    mutationFn: ({ key, value }: UpdateSettingVariables) => updateSetting(key, value),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["settings"] })
+    mutationFn: ({ key, value }: UpdateSettingVariables) => updateSetting(key, value)
   });
 }

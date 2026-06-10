@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { SyncEntityName } from "@life-museum/shared-types";
 import { apiClient } from "./client";
 import {
   enqueueMutation,
@@ -20,12 +21,33 @@ export type SyncState = {
   error: number;
 };
 
-export async function pushPendingChanges() {
+const queryKeysByEntity: Record<SyncEntityName, string[]> = {
+  articles: ["articles"],
+  moments: ["moments"],
+  albums: ["albums"],
+  album_photos: ["albums"],
+  categories: ["categories"],
+  tags: ["tags"],
+  memory_capsules: ["capsules"],
+  inspirations: ["inspirations"],
+  moodRecords: ["moods"],
+  locations: ["locations"],
+  settings: ["settings"]
+};
+
+async function invalidateChangedEntities(entities: Iterable<SyncEntityName>) {
+  const queryKeys = new Set(Array.from(entities).flatMap((entity) => queryKeysByEntity[entity]));
+  await Promise.all(Array.from(queryKeys, (queryKey) => queryClient.invalidateQueries({ queryKey: [queryKey] })));
+}
+
+async function pushPendingChangesOnce() {
   if (!navigator.onLine) return { skipped: true, reason: "offline" };
 
   const uploads = await listPendingUploads();
+  const changedEntities = new Set<SyncEntityName>();
   for (const upload of uploads.filter((item) => item.status !== "synced")) {
     await syncUpload(upload);
+    if (upload.entity) changedEntities.add(upload.entity);
   }
 
   const mutations = await listPendingMutations();
@@ -35,28 +57,25 @@ export async function pushPendingChanges() {
     try {
       await apiClient.post("/sync/push", { mutations: pending });
       await Promise.all(pending.map((item) => removePendingMutation(item.id)));
+      pending.forEach((item) => changedEntities.add(item.entity));
     } catch (error) {
       await Promise.all(pending.map((item) => updatePendingMutation({ ...item, status: "error", error: error instanceof Error ? error.message : "Sync failed" })));
       throw error;
     }
   }
 
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ["articles"] }),
-    queryClient.invalidateQueries({ queryKey: ["moments"] }),
-    queryClient.invalidateQueries({ queryKey: ["albums"] }),
-    queryClient.invalidateQueries({ queryKey: ["categories"] }),
-    queryClient.invalidateQueries({ queryKey: ["tags"] }),
-    queryClient.invalidateQueries({ queryKey: ["settings"] }),
-    queryClient.invalidateQueries({ queryKey: ["capsules"] }),
-    queryClient.invalidateQueries({ queryKey: ["memory-capsules"] }),
-    queryClient.invalidateQueries({ queryKey: ["inspirations"] }),
-    queryClient.invalidateQueries({ queryKey: ["moods"] }),
-    queryClient.invalidateQueries({ queryKey: ["locations"] }),
-    queryClient.invalidateQueries({ queryKey: ["sync-status"] })
-  ]);
+  await invalidateChangedEntities(changedEntities);
+  await queryClient.invalidateQueries({ queryKey: ["sync-status"] });
 
   return { skipped: false, synced: pending.length + uploads.length };
+}
+
+let pushQueue: Promise<unknown> = Promise.resolve();
+
+export function pushPendingChanges() {
+  const push = pushQueue.then(() => pushPendingChangesOnce());
+  pushQueue = push.catch(() => undefined);
+  return push;
 }
 
 async function syncUpload(upload: PendingUpload) {
@@ -83,7 +102,7 @@ export async function queueAndSync(mutation: Omit<PendingMutation, "id" | "times
   const queued = await enqueueMutation(mutation);
   await queryClient.invalidateQueries({ queryKey: ["sync-status"] });
   if (navigator.onLine) {
-    void pushPendingChanges();
+    await pushPendingChanges();
   }
   return queued;
 }
@@ -92,7 +111,7 @@ export async function queueUploadAndSync(upload: Parameters<typeof enqueueUpload
   const queued = await enqueueUpload(upload);
   await queryClient.invalidateQueries({ queryKey: ["sync-status"] });
   if (navigator.onLine) {
-    void pushPendingChanges();
+    await pushPendingChanges();
   }
   return queued;
 }

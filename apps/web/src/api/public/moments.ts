@@ -1,5 +1,6 @@
 import { Thought } from "../../types";
 import { apiClient } from "../client";
+import { resolveMediaUrl } from "../media";
 
 type ApiMoment = {
   id: string;
@@ -13,7 +14,7 @@ type ApiMoment = {
 export async function fetchPublicMoments(): Promise<Thought[]> {
   const { data } = await apiClient.get<ApiMoment[]>("/public/moments");
   return data.map((item) => {
-    const image = item.imageUrl ?? item.image_url;
+    const image = resolveMediaUrl(item.imageUrl ?? item.image_url);
     return {
       id: item.id,
       content: item.content,

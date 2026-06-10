@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { MoodEntry } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
 import { queueAndSync } from "./sync";
 
 type ApiMoodRecord = {
@@ -87,16 +86,15 @@ export async function deleteMood(id: string) {
 }
 
 export function useCreateMoodMutation() {
-  return useMutation({ mutationFn: createMood, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moods"] }) });
+  return useMutation({ mutationFn: createMood });
 }
 
 export function useUpdateMoodMutation() {
   return useMutation({
-    mutationFn: ({ id, mood }: { id: string; mood: MoodPayload }) => updateMood(id, mood),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moods"] })
+    mutationFn: ({ id, mood }: { id: string; mood: MoodPayload }) => updateMood(id, mood)
   });
 }
 
 export function useDeleteMoodMutation() {
-  return useMutation({ mutationFn: deleteMood, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["moods"] }) });
+  return useMutation({ mutationFn: deleteMood });
 }

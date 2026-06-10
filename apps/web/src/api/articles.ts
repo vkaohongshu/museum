@@ -1,6 +1,6 @@
 import { Article } from "../types";
 import { apiClient } from "./client";
-import { queryClient } from "./queryClient";
+import { resolveMediaUrl } from "./media";
 import { queueAndSync } from "./sync";
 import { useMutation } from "@tanstack/react-query";
 
@@ -28,7 +28,7 @@ export async function fetchArticles(): Promise<Article[]> {
       body,
       categoryId: item.categoryId ?? "",
       tagIds: item.tagIds ?? [],
-      cover: item.coverUrl ?? item.cover_url ?? "",
+      cover: resolveMediaUrl(item.coverUrl ?? item.cover_url),
       createdAt: item.createdAt ?? new Date().toISOString(),
       updatedAt: item.updatedAt,
       readMinutes: Math.max(1, Math.ceil(body.length / 450))
@@ -45,7 +45,7 @@ export async function fetchArticle(id: string): Promise<Article> {
     body,
     categoryId: item.categoryId ?? "",
     tagIds: item.tagIds ?? [],
-    cover: item.coverUrl ?? item.cover_url ?? "",
+    cover: resolveMediaUrl(item.coverUrl ?? item.cover_url),
     createdAt: item.createdAt ?? new Date().toISOString(),
     updatedAt: item.updatedAt,
     readMinutes: Math.max(1, Math.ceil(body.length / 450))
@@ -95,13 +95,13 @@ export async function deleteArticle(id: string) {
 }
 
 export function useCreateArticleMutation() {
-  return useMutation({ mutationFn: createArticle, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["articles"] }) });
+  return useMutation({ mutationFn: createArticle });
 }
 
 export function useUpdateArticleMutation() {
-  return useMutation({ mutationFn: ({ id, article }: { id: string; article: ArticlePayload }) => updateArticle(id, article), onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["articles"] }) });
+  return useMutation({ mutationFn: ({ id, article }: { id: string; article: ArticlePayload }) => updateArticle(id, article) });
 }
 
 export function useDeleteArticleMutation() {
-  return useMutation({ mutationFn: deleteArticle, onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["articles"] }) });
+  return useMutation({ mutationFn: deleteArticle });
 }

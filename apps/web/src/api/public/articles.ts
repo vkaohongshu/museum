@@ -1,5 +1,6 @@
 import { Article } from "../../types";
 import { apiClient } from "../client";
+import { resolveMediaUrl } from "../media";
 
 type ApiArticle = {
   id: string;
@@ -22,7 +23,7 @@ export async function fetchPublicArticles(): Promise<Article[]> {
       body,
       categoryId: "",
       tagIds: [],
-      cover: item.coverUrl ?? item.cover_url ?? "",
+      cover: resolveMediaUrl(item.coverUrl ?? item.cover_url),
       createdAt: item.createdAt ?? new Date().toISOString(),
       updatedAt: item.updatedAt,
       readMinutes: Math.max(1, Math.ceil(body.length / 450))
